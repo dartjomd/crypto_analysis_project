@@ -1,0 +1,28 @@
+.venv
+.env
+__pycache__
+*.pyc
+*.pyd
+*.so
+mysql_data/
+
+crypto_analysis_images/
+
+*.db
+*.sqlite
+*.csv # Если вы сохраняете промежуточные результаты в CSV
+*.json # Если вы сохраняете промежуточные результаты в JSON
+
+*.log
+/logs/
+/tmp/
+
+htmlcov/
+.coverage
+dist/
+build/
+.tox/
+.mypy_cache/
+
+.idea/
+.vscode/

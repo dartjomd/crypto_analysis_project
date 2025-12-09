@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  mysql_db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "${EXTERNAL_DB_PORT}:${INTERNAL_DB_PORT}"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+      - ./sql/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+
+  crypto_etl:
+    build: .
+    container_name: crypto_etl
+    restart: "no"
+    environment:
+      DB_HOST: ${DB_HOST} 
+      DB_PORT: ${INTERNAL_DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    volumes:
+      - '.:/app:rw'
+    depends_on:
+      - mysql_db
+    command: python3 app/run.py

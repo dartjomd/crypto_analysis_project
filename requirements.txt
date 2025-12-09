@@ -1,0 +1,7 @@
+pandas
+SQLAlchemy
+python-dotenv
+aiohttp
+matplotlib
+PyMySQL
+cryptography

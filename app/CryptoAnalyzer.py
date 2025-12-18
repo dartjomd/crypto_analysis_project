@@ -1,8 +1,8 @@
 from typing import Literal
 import pandas as pd
 from DatabaseLoader import DatabaseLoader
-
-COLUMNS_TYPE = Literal["price", "volume"]
+from enums.ColumnsToAnalyze import ColumnsToAnalyze
+from enums.OrderEnum import OrderEnum
 
 
 class CryptoAnalyzer:
@@ -15,8 +15,8 @@ class CryptoAnalyzer:
     def get_spikes(
         self,
         up_to_rank: int,
-        column: COLUMNS_TYPE,
-        order: Literal["DESC", "ASC"],
+        column: ColumnsToAnalyze,
+        order: OrderEnum,
         coin_name: str,
         currency: str,
         start_date_key: str,
@@ -54,7 +54,7 @@ class CryptoAnalyzer:
 
     def get_moving_average(
         self,
-        column: COLUMNS_TYPE,
+        column: ColumnsToAnalyze,
         preceding_days: int,
         following_days: int,
         coin_name: str,
@@ -64,9 +64,10 @@ class CryptoAnalyzer:
         Get moving average for price or volume for each (coin, currency)
 
         :param coin_name: coin name to retrieve data for
-        :type coin_name: str
         :param currency: currency in which retrieve data in
-        :type currency: str
+        :param column: column to extract from db
+        :preceding_days: previous days to take into acount when calculating moving average
+        :following_days: future days to take into acount when calculating moving average
         """
 
         SQL_WHERE_CLAUSE = (
@@ -87,19 +88,15 @@ class CryptoAnalyzer:
         return pd.DataFrame(data)
 
     def get_volatility(
-        self, column: COLUMNS_TYPE, lag_to_row: int, coin_name: str, currency: str
+        self, column: ColumnsToAnalyze, lag_to_row: int, coin_name: str, currency: str
     ) -> pd.DataFrame:
         """
         Get volatility by days for (coin, currency) pair
 
         :param column: columns to analyze
-        :type column: price | volume
         :param lag_to_row: how many days to LAG back
-        :type lag_to_row: int
         :param coin_name: coin name to retrieve data for
-        :type coin_name: str
         :param currency: currency in which retrieve data in
-        :type currency: str
         """
 
         SQL_WHERE_CLAUSE = (
@@ -120,7 +117,7 @@ class CryptoAnalyzer:
                 {SQL_WHERE_CLAUSE}
             )
             SELECT 
-                ROUND(({column} - previous)/previous*100, 5) AS {column}_growth,
+                ROUND(({column} - previous)/previous*100, 2) AS {column}_growth,
                 coin_name,
                 date_key,
                 currency
@@ -133,7 +130,7 @@ class CryptoAnalyzer:
 
     def get_monthly_analysis(self, coin_name: str, currency: str) -> pd.DataFrame:
         """
-        Get monthly analysis of price and volume for (coin, currency) pair
+        Get monthly analysis of price, volume and capitalization for (coin, currency) pair
 
         :param coin_name: coin name to retrieve data for
         :type coin_name: str
@@ -150,15 +147,18 @@ class CryptoAnalyzer:
                 SELECT
                     coin_name,
                     currency,
-                    price,
-                    volume,
+                    {ColumnsToAnalyze.price.value},
+                    {ColumnsToAnalyze.capitalization.value},
+                    {ColumnsToAnalyze.volume.value},
+
                     DATE_FORMAT(STR_TO_DATE(date_key, '%Y%m%d'), '%Y-%m') AS year_month_key
-                FROM crypto_data
+                FROM {self._table_name}
                 {SQL_WHERE_CLAUSE}
             )
             SELECT
-                AVG(price) AS avg_price,
-                AVG(volume) AS avg_volume,
+                AVG({ColumnsToAnalyze.price.value}) AS avg_price,
+                AVG({ColumnsToAnalyze.volume.value}) AS avg_volume,
+                AVG({ColumnsToAnalyze.capitalization.value}) AS avg_capitalization,
                 year_month_key,
                 coin_name, 
                 currency 

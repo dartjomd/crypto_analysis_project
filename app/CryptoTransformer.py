@@ -15,17 +15,6 @@ class CryptoTransformer:
         else:
             return self._normalized_df
 
-    def save_normalized_data_to_csv(self, filename: str):
-        """Save normalized DataFrame to csv"""
-
-        # get full path and create folderif necessary
-        path = Path(OUTPUT_DIR)
-        path.mkdir(parents=True, exist_ok=True)
-        fullpath = path / filename
-
-        # save to csv file
-        self._normalized_df.to_csv(fullpath, index=False)
-
     def normalize_crypto_data(
         self, data: list[dict[str, any]], coins_data: list[tuple[str, str]]
     ) -> pd.DataFrame:

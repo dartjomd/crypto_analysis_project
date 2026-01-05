@@ -1,8 +1,7 @@
-from typing import Literal
 import pandas as pd
-from DatabaseLoader import DatabaseLoader
-from enums.ColumnsToAnalyze import ColumnsToAnalyze
-from enums.OrderEnum import OrderEnum
+from app.DatabaseLoader import DatabaseLoader
+from app.enums.ColumnsToAnalyzeEnum import ColumnsToAnalyzeEnum
+from app.enums.OrderEnum import OrderEnum
 
 
 class CryptoAnalyzer:
@@ -15,7 +14,7 @@ class CryptoAnalyzer:
     def get_spikes(
         self,
         up_to_rank: int,
-        column: ColumnsToAnalyze,
+        column: ColumnsToAnalyzeEnum,
         order: OrderEnum,
         coin_name: str,
         currency: str,
@@ -54,7 +53,7 @@ class CryptoAnalyzer:
 
     def get_moving_average(
         self,
-        column: ColumnsToAnalyze,
+        column: ColumnsToAnalyzeEnum,
         preceding_days: int,
         following_days: int,
         coin_name: str,
@@ -88,7 +87,11 @@ class CryptoAnalyzer:
         return pd.DataFrame(data)
 
     def get_volatility(
-        self, column: ColumnsToAnalyze, lag_to_row: int, coin_name: str, currency: str
+        self,
+        column: ColumnsToAnalyzeEnum,
+        lag_to_row: int,
+        coin_name: str,
+        currency: str,
     ) -> pd.DataFrame:
         """
         Get volatility by days for (coin, currency) pair
@@ -147,18 +150,18 @@ class CryptoAnalyzer:
                 SELECT
                     coin_name,
                     currency,
-                    {ColumnsToAnalyze.price.value},
-                    {ColumnsToAnalyze.capitalization.value},
-                    {ColumnsToAnalyze.volume.value},
+                    {ColumnsToAnalyzeEnum.price.value},
+                    {ColumnsToAnalyzeEnum.capitalization.value},
+                    {ColumnsToAnalyzeEnum.volume.value},
 
                     DATE_FORMAT(STR_TO_DATE(date_key, '%Y%m%d'), '%Y-%m') AS year_month_key
                 FROM {self._table_name}
                 {SQL_WHERE_CLAUSE}
             )
             SELECT
-                AVG({ColumnsToAnalyze.price.value}) AS avg_price,
-                AVG({ColumnsToAnalyze.volume.value}) AS avg_volume,
-                AVG({ColumnsToAnalyze.capitalization.value}) AS avg_capitalization,
+                AVG({ColumnsToAnalyzeEnum.price.value}) AS avg_price,
+                AVG({ColumnsToAnalyzeEnum.volume.value}) AS avg_volume,
+                AVG({ColumnsToAnalyzeEnum.capitalization.value}) AS avg_capitalization,
                 year_month_key,
                 coin_name, 
                 currency 

@@ -28,4 +28,4 @@ services:
       - '.:/app:rw'
     depends_on:
       - mysql_db
-    command: python3 app/run.py
+    command: python3 run.py

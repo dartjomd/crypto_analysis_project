@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ColumnsToAnalyze(Enum):
+class ColumnsToAnalyzeEnum(Enum):
     capitalization = "capitalization"
     price = "price"
     volume = "volume"

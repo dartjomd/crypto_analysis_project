@@ -1,6 +1,6 @@
 import asyncio
-from BaseFetchClass import BaseFetchClass
-from consts import BASE_URL
+from app.BaseFetchClass import BaseFetchClass
+from app.consts import BASE_URL
 
 
 class CryptoExtracter(BaseFetchClass):

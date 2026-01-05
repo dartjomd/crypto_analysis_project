@@ -1,12 +1,13 @@
 from datetime import datetime
 from pathlib import Path
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
 import matplotlib
 
-from consts import OUTPUT_DIR
+from app.consts import OUTPUT_DIR
 
 matplotlib.use("Agg")
 
@@ -427,9 +428,7 @@ class CryptoVisualizer:
 
         fig, ax = plt.subplots(figsize=(10, 10))
 
-        formatted_labels = [
-            f"{ym[:4]}-{ym[4:6]}" for ym in subset["year_month_key"].astype(str)
-        ]
+        formatted_labels = subset["year_month_key"].astype(str).tolist()
         sizes = subset["avg_volume"]
 
         wedges, texts, autotexts = ax.pie(

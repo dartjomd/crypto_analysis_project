@@ -1,11 +1,12 @@
 from datetime import datetime
-import os
 from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
 import matplotlib
+
+from consts import OUTPUT_DIR
 
 matplotlib.use("Agg")
 
@@ -36,7 +37,7 @@ class CryptoVisualizer:
         df = df.copy()
 
         if df.empty:
-            print("DataFrame is empty. Unable to build chart.")
+            print("DataFrame is empty. Unable to draw a general info chart.")
             return
 
         # filter data down to a single pair
@@ -123,11 +124,13 @@ class CryptoVisualizer:
 
         :param df: DataFrame with monthly data (must contain year_month_key, coin_name, avg_price).
         :type df: pd.DataFrame
-        :param column: columnt to visualize ('avg_price' or 'avg_volume').
+        :param column: columnt to visualize ('avg_price' or 'avg_volume' or 'avg_capitalization').
         :type column: str
         """
         if df.empty or column not in df.columns:
-            print(f"DataFrame is empty or '{column}' is absent")
+            print(
+                f"DataFrame is empty or '{column}' is absent. Unable to draw a monthly analysis chart."
+            )
             return
 
         # get coin name and currency
@@ -138,8 +141,16 @@ class CryptoVisualizer:
         subset = df.sort_values(by="year_month_key")
 
         # configure labels
-        title_map = {"avg_price": "Average Price", "avg_volume": "Average Volume"}
-        y_label_map = {"avg_price": "Price (USD)", "avg_volume": "Volume"}
+        title_map = {
+            "avg_price": "Average Price",
+            "avg_volume": "Average Volume",
+            "avg_capitalization": "Average Capitalization",
+        }
+        y_label_map = {
+            "avg_price": f"Price ({currency_code})",
+            "avg_volume": "Volume",
+            "avg_capitalization": "Capitalization",
+        }
 
         fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -188,70 +199,59 @@ class CryptoVisualizer:
         :param column: The column that was ranked
         """
         if df.empty:
-            print(f"DataFrame for spikes is empty. Unable to draw a graph")
+            print(f"DataFrame for spikes is empty. Unable to draw a spikes graph")
             return
 
         # format starting/ending dates
         def format_date_key(date: str) -> str:
             return f"{date[:4]}-{date[4:6]}-{date[6:8]}"
 
-        formatted_start_date = format_date_key(start_date_key)
-        formatted_end_date = format_date_key(end_date_key)
+        formatted_start_date = format_date_key(str(start_date_key))
+        formatted_end_date = format_date_key(str(end_date_key))
 
-        # prepare data and context
+        # get coin and currency
         coin = df["coin_name"].iloc[0].upper()
         currency = df["currency"].iloc[0].upper()
 
-        # determine if it's high or low rank based on the data order (assuming highest rank = 1)
+        # get order type
         order_type = "Highest" if df.iloc[0][f"{column}_rank"] == 1 else "Lowest"
+        color = "darkgreen" if order_type == "Highest" else "darkred"
 
-        metric_title = column.capitalize()
-
-        # sort data for clean visualization (best days first)
-        df = df.sort_values(by=f"{column}_rank", ascending=True)
-
-        # create date labels and values
-        labels = [
-            datetime.strptime(str(d), "%Y%m%d").strftime("%Y-%m-%d")
-            for d in df["date_key"]
-        ]
+        # prepare data
+        dates = pd.to_datetime(df["date_key"].astype(str), format="%Y%m%d").dt.strftime(
+            "%Y-%m-%d"
+        )
         values = df[column]
 
+        # create plot
         fig, ax = plt.subplots(figsize=(12, 6))
 
-        # plot the bars
-        bars = ax.bar(
-            labels,
-            values,
-            color="darkred" if order_type == "Lowest" else "darkgreen",
-            alpha=0.7,
-        )
+        color = "darkgreen" if order_type == "Highest" else "darkred"
+        bars = ax.bar(dates, values, color=color, alpha=0.7)
 
-        # configuration
-        formatter = mticker.ScalarFormatter(
-            useOffset=False, useMathText=False
-        )  # format numbers display to normal
-        ax.yaxis.set_major_formatter(formatter)
+        # labels and title
         ax.set_title(
-            f"{order_type} {metric_title} Spikes for {coin}/{currency} {formatted_start_date} - {formatted_end_date}",
+            f"{column.capitalize()} {order_type} Spikes - {coin}/{currency}, {formatted_start_date} - {formatted_end_date}",
             fontsize=14,
         )
         ax.set_xlabel("Date")
-        ax.set_ylabel(f"{metric_title} ({currency})")
-        ax.tick_params(axis="x", rotation=35)
+        ax.set_ylabel(f"{column.capitalize()} ({currency})")
+        plt.xticks(rotation=35)
         ax.grid(axis="y", linestyle="--", alpha=0.5)
 
-        # add values on top of bars
+        # add values on bars
         for bar in bars:
             height = bar.get_height()
             ax.text(
-                bar.get_x() + bar.get_width() / 2.0,
-                height + (height * 0.01),
+                bar.get_x() + bar.get_width() / 2,
+                height,
                 f"{height:,.2f}",
                 ha="center",
                 va="bottom",
                 fontsize=9,
             )
+
+        plt.tight_layout()
 
         # save chart
         filename_base = f"{coin}_{currency}_{order_type}_spikes_{column}_{formatted_start_date}--{formatted_end_date}"
@@ -260,7 +260,7 @@ class CryptoVisualizer:
         )
 
     @staticmethod
-    def plot_moving_average(df: pd.DataFrame, column: str, total_day_span: str):
+    def plot_moving_average(df: pd.DataFrame, column: str, total_day_span: int):
         """
         Draw daily price and moving average price on a graph
 
@@ -269,7 +269,9 @@ class CryptoVisualizer:
         :param total_day_span: total amount of days used to calculate moving average
         """
         if df.empty:
-            print(f"DataFrame for moving average is empty. Unable to draw a graph")
+            print(
+                f"DataFrame for moving average is empty. Unable to draw a moving average graph."
+            )
             return
 
         # form data
@@ -338,7 +340,9 @@ class CryptoVisualizer:
         :param days_to_lag: days back to calculate volatility
         """
         if df.empty:
-            print(f"DataFrame for volatility is empty. Unable to draw a graph")
+            print(
+                f"DataFrame for volatility is empty. Unable to draw a volatility graph."
+            )
             return
 
         # prepare data and context
@@ -399,7 +403,9 @@ class CryptoVisualizer:
             return f"{pct:.1f}%\n({volume_formatted})"
 
         if df.empty or "avg_volume" not in df.columns:
-            print("Visualizer: DataFrame is empty or 'avg_volume' column is missing.")
+            print(
+                "DataFrame is empty or 'avg_volume' column is missing. Unable to draw a monthly volume share graph."
+            )
             return
 
         # copy df for maximum 12 months
@@ -421,24 +427,22 @@ class CryptoVisualizer:
 
         fig, ax = plt.subplots(figsize=(10, 10))
 
-        labels = subset["year_month_key"]
+        formatted_labels = [
+            f"{ym[:4]}-{ym[4:6]}" for ym in subset["year_month_key"].astype(str)
+        ]
         sizes = subset["avg_volume"]
 
         wedges, texts, autotexts = ax.pie(
             sizes,
-            labels=labels,
+            labels=formatted_labels,
             autopct=format_label,
             startangle=90,
             wedgeprops={
                 "edgecolor": "black",
                 "linewidth": 0.8,
             },
-            pctdistance=0.85,
+            pctdistance=0.65,
         )
-
-        # draw a circle in the center
-        centre_circle = plt.Circle((0, 0), 0.70, fc="white")
-        fig.gca().add_artist(centre_circle)
 
         # title and appearance
         ax.axis("equal")
@@ -462,11 +466,9 @@ class CryptoVisualizer:
         # get current date
         current_date = datetime.now()
         formatted_date = current_date.strftime("%Y%m%d_%H%M%S")
-        filename = f"{filename_base}_{formatted_date}.png"
+        filename = f"{filename_base}_{formatted_date}.png".lower()
 
-        SAVE_DIR = "crypto_analysis_images"
-
-        target_directory = Path(SAVE_DIR) / category_dir
+        target_directory = Path(OUTPUT_DIR) / category_dir
         target_directory.mkdir(parents=True, exist_ok=True)
         full_path = target_directory / filename
 

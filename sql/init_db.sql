@@ -11,6 +11,7 @@ CREATE TABLE `crypto_data` (
     `currency` VARCHAR(10),
     `price` DECIMAL(18, 2) NOT NULL,
     `volume` DECIMAL(30, 2) NOT NULL,
+    `capitalization` DECIMAL(40, 2) NOT NULL,
 
     PRIMARY KEY (`coin_name`, `date_key`, `currency`)
 );

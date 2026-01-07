@@ -8,6 +8,7 @@ import matplotlib.ticker as mticker
 import matplotlib
 
 from app.consts import OUTPUT_DIR
+from app.enums.ColumnsToVisualizeEnum import ColumnsToVisualizeEnum
 
 matplotlib.use("Agg")
 
@@ -118,7 +119,7 @@ class CryptoVisualizer:
     @staticmethod
     def plot_monthly_analysis(
         df: pd.DataFrame,
-        column: str = "avg_price",
+        column: ColumnsToVisualizeEnum,
     ):
         """
         Build a bar diagram for selected column
@@ -191,7 +192,10 @@ class CryptoVisualizer:
 
     @staticmethod
     def plot_spikes(
-        df: pd.DataFrame, column: str, start_date_key: str, end_date_key: str
+        df: pd.DataFrame,
+        column: ColumnsToVisualizeEnum,
+        start_date_key: str,
+        end_date_key: str,
     ):
         """
         Draw a graph for top N days in ASCENDING or DESCENGING order.
@@ -261,7 +265,9 @@ class CryptoVisualizer:
         )
 
     @staticmethod
-    def plot_moving_average(df: pd.DataFrame, column: str, total_day_span: int):
+    def plot_moving_average(
+        df: pd.DataFrame, column: ColumnsToVisualizeEnum, total_day_span: int
+    ):
         """
         Draw daily price and moving average price on a graph
 
@@ -332,7 +338,9 @@ class CryptoVisualizer:
         )
 
     @staticmethod
-    def plot_volatility(df: pd.DataFrame, column: str, days_to_lag: int):
+    def plot_volatility(
+        df: pd.DataFrame, column: ColumnsToVisualizeEnum, days_to_lag: int
+    ):
         """
         Draws a graph of the period-over-period percentage change for a specific metric.
 

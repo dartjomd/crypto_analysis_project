@@ -9,14 +9,12 @@ from app.CryptoTransformer import CryptoTransformer
 from app.CryptoVisualizer import CryptoVisualizer
 from app.DatabaseLoader import DatabaseLoader
 from app.CryptoAnalyzer import CryptoAnalyzer
+from app.enums.ColumnsToVisualizeEnum import ColumnsToVisualizeEnum
 from app.enums.OrderEnum import OrderEnum
 from app.enums.ColumnsToAnalyzeEnum import ColumnsToAnalyzeEnum
 
 load_dotenv()
 
-DAYS_OF_HISTORY = 100
-COINS = ["solana", "ethereum", "dsd3d"]
-CURRENCY = ["usd", "sd3"]
 TABLE_NAME = os.getenv("TABLE_NAME")
 
 
@@ -27,11 +25,11 @@ def get_coins_data(
     return [(coin, currency) for coin in coins_list for currency in currency_list]
 
 
-async def main():
+async def main(days_of_history: int, coins: list[str], currency: list[str]):
     # get coins data for extracting and transforming data correctly
-    coins_data = get_coins_data(coins_list=COINS, currency_list=CURRENCY)
+    coins_data = get_coins_data(coins_list=coins, currency_list=currency)
     end_point_timestamp = int(time.time())
-    start_date = datetime.now() - timedelta(days=DAYS_OF_HISTORY)
+    start_date = datetime.now() - timedelta(days=days_of_history)
     start_timestamp = int(start_date.timestamp())
 
     # extract data using API
@@ -80,7 +78,7 @@ async def main():
         )
         CryptoVisualizer.plot_spikes(
             df=df_spikes_data,
-            column=ColumnsToAnalyzeEnum.capitalization.value,
+            column=ColumnsToVisualizeEnum.capitalization.value,
             start_date_key=start_date_key,
             end_date_key=end_date_key,
         )
@@ -95,13 +93,14 @@ async def main():
             coin_name=coin, currency=currency
         )
         CryptoVisualizer.plot_monthly_analysis(
-            df=df_monthly_data, column=ColumnsToAnalyzeEnum.average_price.value
+            df=df_monthly_data, column=ColumnsToVisualizeEnum.average_price.value
         )
         CryptoVisualizer.plot_monthly_analysis(
-            df=df_monthly_data, column=ColumnsToAnalyzeEnum.average_volume.value
+            df=df_monthly_data, column=ColumnsToVisualizeEnum.average_volume.value
         )
         CryptoVisualizer.plot_monthly_analysis(
-            df=df_monthly_data, column=ColumnsToAnalyzeEnum.average_capitalization.value
+            df=df_monthly_data,
+            column=ColumnsToVisualizeEnum.average_capitalization.value,
         )
 
         # visualize monthly share of volume
@@ -120,7 +119,7 @@ async def main():
         )
         CryptoVisualizer.plot_moving_average(
             df=df_moving_average_data,
-            column=ColumnsToAnalyzeEnum.price.value,
+            column=ColumnsToVisualizeEnum.price.value,
             total_day_span=total_day_span,
         )
 
@@ -134,15 +133,17 @@ async def main():
         )
         CryptoVisualizer.plot_volatility(
             df=df_volatility_data,
-            column=ColumnsToAnalyzeEnum.price.value,
+            column=ColumnsToVisualizeEnum.price.value,
             days_to_lag=days_to_lag,
         )
         continue
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
-
-
-# sql injection !!!
-# volume, spikes !! check with reset database
+    asyncio.run(
+        main(
+            days_of_history=100,
+            coins=["bitcoin", "non_existing_coin"],
+            currency=["usd", "non_existing_currency"],
+        )
+    )

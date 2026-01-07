@@ -1,4 +1,3 @@
-import asyncio
 from app.BaseFetchClass import BaseFetchClass
 from app.consts import BASE_URL
 

@@ -1,9 +1,8 @@
 import os
 from dotenv import load_dotenv
 
-from sqlalchemy import Engine, Table, create_engine, text
+from sqlalchemy import Engine, create_engine, text
 from pandas import DataFrame
-from sqlalchemy.engine.base import Connection
 
 
 load_dotenv()

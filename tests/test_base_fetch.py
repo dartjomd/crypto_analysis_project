@@ -66,3 +66,30 @@ async def test_semaphore_limits_concurrency(monkeypatch):
     await asyncio.gather(*tasks)
 
     assert max_observed == limit
+
+
+@pytest.mark.asyncio
+async def test_fetch_data_api_internal_error():
+    """Test that code catches errors in JSON"""
+    fetcher = BaseFetchClass()
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = {"error": "Invalid API Key"}
+
+    mock_session = MagicMock()
+    mock_session.get.return_value.__aenter__.return_value = mock_response
+
+    result = await fetcher._fetch_data(mock_session, "http://api.com", {})
+    assert result == {}
+
+
+@pytest.mark.asyncio
+async def test_fetch_data_timeout():
+    """Test that code correctly handles timeout error"""
+    fetcher = BaseFetchClass()
+    mock_session = MagicMock()
+
+    mock_session.get.side_effect = asyncio.TimeoutError()
+
+    result = await fetcher._fetch_data(mock_session, "http://api.com", {})
+    assert result == {}
